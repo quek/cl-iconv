@@ -1,0 +1,5 @@
+/_darcs
+/iconv_*.tar.gz
+/iconv_*.tar.gz.asc
+*~
+*.fasl

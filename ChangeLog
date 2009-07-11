@@ -1,0 +1,19 @@
+2007-12-25  Yoshinori Tahara  <read.eval.print@gmail.com>
+
+	* iconv.lisp (get-errno): use erron again. if sbcl
+	sb-alien:get-errno, if cmu unix:unix-errno, else __errno_location.
+
+2007-12-24  Yoshinori Tahara  <read.eval.print@gmail.com>
+
+	* iconv.lisp (iconv):
+	use cffi.
+	not use errno.
+	delete error-p argument.
+	second return value is t or nil which success or failed.
+	from-code and to-code are string or symbol.
+
+2006-03-26  Yoshinori Tahara  <read.eval.print@gmail.com>
+
+	* iconv.lisp (iconv): fix errno problem(only sbcl)
+	Thanks Dmitry Petukhov.
+
