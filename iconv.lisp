@@ -6,14 +6,16 @@
 
 (in-package :iconv)
 
+(define-condition iconv-error (error)
+  ()
+  (:documentation "Error that is raised when ICONV-OPEN returns as error."))
+
+(define-condition iconv-unknown-encoding-error (error)
+  ()
+  (:documentation "Error that is raised if the encoding is unknown."))
+
 (defun get-errno ()
-  #+sbcl
-  (sb-alien:get-errno)
-  #+cmu
-  (unix:unix-errno)
-  #-(or sbcl cmu)
-  (cffi:mem-aref  (cffi:foreign-funcall "__errno_location" :pointer) :int 0)
-  )
+  (iolib.syscalls:errno))
 
 (defconstant E2BIG
   #+sbcl
@@ -25,7 +27,7 @@
   "The output buffer has no more room for the next converted character.")
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (cffi:defcfun "iconv_open" :pointer
+  (cffi:defcfun ("iconv_open" %iconv-open) :pointer
     (tocode :string)
     (fromcode :string))
 
@@ -59,6 +61,15 @@
                  (cffi:mem-aref outbytesleft :unsigned-int 0) len)
            (%iconv cd in-ptr inbytesleft out-ptr outbytesleft))
       (iconv-close cd))))
+
+(defun iconv-open (tocode fromcode)
+  (let ((result (%iconv-open tocode fromcode)))
+    (when (= (cffi:pointer-address result)
+             (1- (ash 1 (* (cffi:foreign-type-size :pointer) 8))))
+      (if (= (get-errno) iolib.syscalls:einval)
+          (error 'iconv-unknown-encoding-error)
+          (error 'iconv-error)))
+    result))
 
 (defmacro with-iconv-cd ((cd from to) &body body)
   `(let ((,cd (iconv-open (string ,to) (string ,from))))
