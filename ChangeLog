@@ -1,3 +1,9 @@
+2013-05-30  Elias Martenson  <lokedhs@gmail.com>
+
+	* iconv.lisp: Improve error handling Raise an error if the call to
+	`iconv_open' fails. Use IOLIB for errno interaction instead of
+	platform specific code.
+
 2007-12-25  Yoshinori Tahara  <read.eval.print@gmail.com>
 
 	* iconv.lisp (get-errno): use erron again. if sbcl
