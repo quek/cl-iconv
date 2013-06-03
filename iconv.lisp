@@ -26,51 +26,30 @@
   7
   "The output buffer has no more room for the next converted character.")
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (cffi:defcfun ("iconv_open" %iconv-open) :pointer
-    (tocode :string)
-    (fromcode :string))
+(cffi:defcfun ("iconv_open" %iconv-open) :pointer
+  (tocode :string)
+  (fromcode :string))
 
-  (cffi:defcfun "iconv_close" :int
-    (cd :pointer))
+(cffi:defcfun "iconv_close" :int
+  (cd :pointer))
 
-  (cffi:defcfun ("iconv" %iconv) :unsigned-int
-    (cd :pointer)
-    (inbuf :pointer)
-    (inbytesleft :pointer)
-    (outbuf :pointer)
-    (outbytesleft :pointer)))
+(cffi:defcfun ("iconv" %iconv) :unsigned-long
+  (cd :pointer)
+  (inbuf :pointer)
+  (inbytesleft :pointer)
+  (outbuf :pointer)
+  (outbytesleft :pointer))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun iconv-open (tocode fromcode)
-    (let ((result (%iconv-open tocode fromcode)))
-      (when (= (cffi:pointer-address result)
-               (1- (ash 1 (* (cffi:foreign-type-size :pointer) 8))))
-        (if (= (get-errno) iolib.syscalls:einval)
-            (error 'iconv-unknown-encoding-error)
-            (error 'iconv-error)))
-      result)))
+(defun iconv-open (tocode fromcode)
+  (let ((result (%iconv-open tocode fromcode)))
+    (when (= (cffi:pointer-address result)
+             (1- (ash 1 (* (cffi:foreign-type-size :pointer) 8))))
+      (if (= (get-errno) iolib.syscalls:einval)
+          (error 'iconv-unknown-encoding-error)
+          (error 'iconv-error)))
+    result))
 
-(defconstant +error-return+
-  (let ((cd (iconv-open "UTF-8" "EUC-JP"))
-        (len 3))
-    (unwind-protect
-         (cffi:with-foreign-objects
-             ((inbuffer :unsigned-char len)
-              (outbuffer :unsigned-char len)
-              (in-ptr :pointer)
-              (out-ptr :pointer)
-              (inbytesleft  :unsigned-int)
-              (outbytesleft :unsigned-int))
-           (loop for i from 0 below len
-              for v in '(227 0 0)
-              do (setf (cffi:mem-aref inbuffer :unsigned-char i) v))
-           (setf (cffi:mem-aref in-ptr :pointer 0) inbuffer
-                 (cffi:mem-aref out-ptr :pointer 0) outbuffer
-                 (cffi:mem-aref inbytesleft :unsigned-int 0) len
-                 (cffi:mem-aref outbytesleft :unsigned-int 0) len)
-           (%iconv cd in-ptr inbytesleft out-ptr outbytesleft))
-      (iconv-close cd))))
+(defconstant +error-return+ (1- (ash 1 (* (cffi:foreign-type-size :unsigned-long) 8))))
 
 (defmacro with-iconv-cd ((cd from to) &body body)
   `(let ((,cd (iconv-open (string ,to) (string ,from))))
