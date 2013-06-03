@@ -41,6 +41,16 @@
     (outbuf :pointer)
     (outbytesleft :pointer)))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun iconv-open (tocode fromcode)
+    (let ((result (%iconv-open tocode fromcode)))
+      (when (= (cffi:pointer-address result)
+               (1- (ash 1 (* (cffi:foreign-type-size :pointer) 8))))
+        (if (= (get-errno) iolib.syscalls:einval)
+            (error 'iconv-unknown-encoding-error)
+            (error 'iconv-error)))
+      result)))
+
 (defconstant +error-return+
   (let ((cd (iconv-open "UTF-8" "EUC-JP"))
         (len 3))
@@ -61,15 +71,6 @@
                  (cffi:mem-aref outbytesleft :unsigned-int 0) len)
            (%iconv cd in-ptr inbytesleft out-ptr outbytesleft))
       (iconv-close cd))))
-
-(defun iconv-open (tocode fromcode)
-  (let ((result (%iconv-open tocode fromcode)))
-    (when (= (cffi:pointer-address result)
-             (1- (ash 1 (* (cffi:foreign-type-size :pointer) 8))))
-      (if (= (get-errno) iolib.syscalls:einval)
-          (error 'iconv-unknown-encoding-error)
-          (error 'iconv-error)))
-    result))
 
 (defmacro with-iconv-cd ((cd from to) &body body)
   `(let ((,cd (iconv-open (string ,to) (string ,from))))
