@@ -6,6 +6,12 @@
 
 (in-package :iconv)
 
+(cffi:define-foreign-library libiconv
+  (:darwin "libiconv.dylib")
+  (:unix "libiconv.so"))
+
+(cffi:use-foreign-library libiconv)
+
 (define-condition iconv-error (error)
   ()
   (:documentation "Error that is raised when ICONV-OPEN returns as error."))
