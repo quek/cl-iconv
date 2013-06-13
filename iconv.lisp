@@ -6,6 +6,12 @@
 
 (in-package :iconv)
 
+(cffi:define-foreign-library libiconv
+  (:darwin "libiconv.dylib")
+  (:unix "libiconv.so"))
+
+(cffi:use-foreign-library libiconv)
+
 (define-condition iconv-error (error)
   ()
   (:documentation "Error that is raised when ICONV-OPEN returns as error."))
@@ -17,13 +23,7 @@
 (defun get-errno ()
   (iolib.syscalls:errno))
 
-(defconstant E2BIG
-  #+sbcl
-  SB-POSIX:E2BIG
-  #+cmu
-  UNIX:E2BIG
-  #-(or sbcl cmu)
-  7
+(defconstant E2BIG iolib.syscalls:e2big
   "The output buffer has no more room for the next converted character.")
 
 (cffi:defcfun ("iconv_open" %iconv-open) :pointer
