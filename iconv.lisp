@@ -17,7 +17,7 @@
 
 (cffi:define-foreign-library libiconv
   (:darwin "libiconv.dylib")
-  (:unix "libiconv.so"))
+  ((and :unix (not :linux)) "libiconv.so"))
 
 (cffi:use-foreign-library libiconv)
 
