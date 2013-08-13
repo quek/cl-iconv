@@ -16,7 +16,8 @@
   "The number of bytes that will be reported when displaying an error.")
 
 (cffi:define-foreign-library libiconv
-  (:darwin "libiconv.dylib"))
+  (:darwin "libiconv.dylib")
+  ((and :unix (not :linux)) "libiconv.so"))
 
 (cffi:use-foreign-library libiconv)
 
