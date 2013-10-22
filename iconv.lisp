@@ -101,7 +101,7 @@ Previous ~a bytes leading up to this error: ~s"
 (defun iconv (from-code to-code from-vector)
   (with-iconv-cd (cd from-code to-code)
     (let* ((in-len (length from-vector))
-	   (out-len (* in-len 2))
+	   (out-len (max (* in-len 2) 100))
 	   (out (make-array out-len
 			    :element-type '(unsigned-byte 8)
 			    :fill-pointer 0
